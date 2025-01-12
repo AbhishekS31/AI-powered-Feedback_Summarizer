@@ -1,11 +1,10 @@
 import streamlit as st
 import requests
-import pandas as pd
-import plotly.express as px
 
 st.title('AI-Powered Feedback Summarizer')
 
 feedback_input = st.text_area('Enter Feedback (one per line):', height=200)
+user_email = st.text_input('Enter your email to receive the summary report:')
 
 if st.button('Process Feedback'):
     feedback_list = feedback_input.strip().split('\n')
@@ -19,12 +18,14 @@ if st.button('Process Feedback'):
         status = status_response.json().get('state')
         if status == 'SUCCESS':
             results = status_response.json().get('result')
-            df = pd.DataFrame(results)
-            st.dataframe(df)
+            st.write('Feedback processing complete!')
 
-            # Sentiment Distribution Chart
-            fig = px.pie(df, names='sentiment', title='Sentiment Distribution')
-            st.plotly_chart(fig)
+            # Trigger email sending
+            email_response = requests.post('http://localhost:5000/send-report', json={'email': user_email, 'feedback': results})
+            if email_response.status_code == 200:
+                st.success('Summary report sent to your email!')
+            else:
+                st.error('Failed to send the email. Please try again.')
             break
         elif status == 'FAILURE':
             st.error('Error in processing feedback.')
