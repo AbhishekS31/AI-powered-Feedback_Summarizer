@@ -60,16 +60,6 @@ def task_status(task_id):
         response = {'state': task.state, 'error': str(task.info)}
     return jsonify(response)
 
-def send_email_report(user_email):
-    msg = MIMEText("Your feedback summary report is ready.")
-    msg['Subject'] = "Feedback Summary Report"
-    msg['From'] = "your_email@example.com"
-    msg['To'] = user_email
-    with smtplib.SMTP('smtp.gmail.com', 587) as server:
-        server.starttls()
-        server.login("your_email@example.com", "your_password")
-        server.send_message(msg)
-    
 def generate_pdf(feedback_data):
     pdf = FPDF()
     pdf.add_page()
@@ -80,7 +70,38 @@ def generate_pdf(feedback_data):
         pdf.cell(200, 10, txt=f"Sentiment: {item['sentiment']}", ln=True)
         pdf.cell(200, 10, txt=f"Summary: {item['summary']}", ln=True)
         pdf.cell(200, 10, txt="---", ln=True)
-    pdf.output("feedback_report.pdf")
+    pdf_file = "feedback_report.pdf"
+    pdf.output(pdf_file)
+    return pdf_file
+
+def send_email_report(email, pdf_file):
+    msg = MIMEText("Your feedback summary report is attached.")
+    msg['Subject'] = "Feedback Summary Report"
+    msg['From'] = "your_email@example.com"  # Replace with your email
+    msg['To'] = email
+
+    with open(pdf_file, "rb") as attachment:
+        part = MIMEText(attachment.read(), "base64")
+        part.add_header('Content-Disposition', 'attachment', filename=pdf_file)
+        msg.attach(part)
+
+    with smtplib.SMTP('smtp.gmail.com', 587) as server:
+        server.starttls()
+        server.login("your_email@example.com", "your_password")  # Replace with your email credentials
+        server.send_message(msg)
+
+@app.route('/send-report', methods=['POST'])
+def send_report():
+    data = request.json
+    email = data.get('email')
+    feedback = data.get('feedback')
+
+    pdf_file = generate_pdf(feedback)
+    try:
+        send_email_report(email, pdf_file)
+        return jsonify({'message': 'Email sent successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     init_db()
