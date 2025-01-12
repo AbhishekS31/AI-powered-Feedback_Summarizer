@@ -5,7 +5,8 @@ import sqlite3
 from celery import Celery
 import smtplib
 from email.mime.text import MIMEText
-from fpdf import FPDFss
+from fpdf import FPDF
+
 
 app = Flask(__name__)
 app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'

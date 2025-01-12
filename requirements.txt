@@ -2,3 +2,10 @@ Flask
 transformers
 streamlit
 pandas
+plotly 
+langdetect 
+fpdf 
+smtplib 
+celery 
+redis
+tensorflow
