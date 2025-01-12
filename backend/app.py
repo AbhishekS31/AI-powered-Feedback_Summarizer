@@ -3,6 +3,9 @@ from transformers import pipeline
 from langdetect import detect
 import sqlite3
 from celery import Celery
+import smtplib
+from email.mime.text import MIMEText
+from fpdf import FPDFss
 
 app = Flask(__name__)
 app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
@@ -56,6 +59,28 @@ def task_status(task_id):
     else:
         response = {'state': task.state, 'error': str(task.info)}
     return jsonify(response)
+
+def send_email_report(user_email):
+    msg = MIMEText("Your feedback summary report is ready.")
+    msg['Subject'] = "Feedback Summary Report"
+    msg['From'] = "your_email@example.com"
+    msg['To'] = user_email
+    with smtplib.SMTP('smtp.gmail.com', 587) as server:
+        server.starttls()
+        server.login("your_email@example.com", "your_password")
+        server.send_message(msg)
+    
+def generate_pdf(feedback_data):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 10, txt="Feedback Summary Report", ln=True, align='C')
+    for item in feedback_data:
+        pdf.cell(200, 10, txt=f"Feedback: {item['feedback']}", ln=True)
+        pdf.cell(200, 10, txt=f"Sentiment: {item['sentiment']}", ln=True)
+        pdf.cell(200, 10, txt=f"Summary: {item['summary']}", ln=True)
+        pdf.cell(200, 10, txt="---", ln=True)
+    pdf.output("feedback_report.pdf")
 
 if __name__ == '__main__':
     init_db()
