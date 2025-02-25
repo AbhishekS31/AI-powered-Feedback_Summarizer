@@ -34,3 +34,9 @@ Before running the application, ensure you have the following dependencies insta
 
 ```bash
 pip install flask transformers langdetect celery smtplib fpdf redis
+```
+
+### Frontend
+```bash
+pip install streamlit requests
+```
